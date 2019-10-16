@@ -1,0 +1,37 @@
+TEMPLATE = app
+QT += network svg
+
+# To disable debug code use:
+#     qmake "CFG=release" gui.pro
+# or
+#     qmake "CFG=nodebug" gui.pro
+CONFIG += debug
+
+contains(CFG, release) {
+  message (Release build)
+  CONFIG -= debug
+}
+contains(CFG, nodebug) {
+  message (Release build without IMAP debug code.)
+  DEFINES += NOIMAPDEBUG
+  CONFIG -= debug
+  # is not expensive:
+  # DEFINES += NDEBUG
+}
+
+message (Using Qt CONFIG: $$CONFIG)
+
+TARGET = trysterobiff
+
+HEADERS += tray.hh client.hh name.hh external.hh infobox.hh dummy.hh decode.hh \
+    setupdialog.hh \
+    settings.hh
+SOURCES += gui.cc tray.cc client.cc external.cc infobox.cc dummy.cc decode.cc \
+    setupdialog.cc \
+    settings.cc
+
+
+RESOURCES = gui.qrc
+
+FORMS += \
+    setupdialog.ui
