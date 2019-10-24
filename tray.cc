@@ -43,37 +43,25 @@
 #include "infobox.hh"
 #include <iostream>
 
-Tray::Tray() : tray(0), con(0), discon(0), action_info(0), infobox(0),
-               new_msg(0), show_preview(true), preview_time(5),
-               pre_reconnect(false) {
+Tray::Tray(const SettingsPtr& aSettings ) : settings(0), tray(0), infobox(0),
+               new_msg(0), pre_reconnect(false) {
     tray = new QSystemTrayIcon(); // WTF?!? crashes in QObjectPrivate::deleteChildren when: this);
+    connect(tray, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(action(QSystemTrayIcon::ActivationReason)));
 
+    settings = aSettings;
     setup_infobox();
-
-    QSettings s;
-
-    QVariant v = s.value("external_app");
-    if (v.isValid()) {
-        ext_app_cmd = v.toString();
-    }
-
     setup_menu();
-
-    pixmap_new = QPixmap(s.value("gui/newmail", QVariant(":/icons/mail-message-new.svg")).toString());
-    icon_normal = QIcon(s.value("gui/normal", QVariant(":/icons/mail-forward.svg")).toString());
-    icon_error = QIcon(s.value("gui/error", QVariant(":/icons/process-stop.svg")).toString());
-    icon_disconnected = QIcon(s.value("gui/disconnected", QVariant(":/icons/applications-multimedia.svg")).toString());
-
-    show_preview = s.value("preview", QVariant(true)).toBool();
-    preview_time = s.value("preview_time", QVariant(5)).toUInt();
-    if (!preview_time)
-        preview_time = 5;
-
-
+    setup_icons();
 
     tray->setIcon(icon_normal);
-    connect(tray, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(action(QSystemTrayIcon::ActivationReason)));
     tray->show();
+}
+
+void Tray::setup_icons() {
+    pixmap_new = QPixmap(settings -> icon_new());
+    icon_normal = QIcon(settings -> icon_normal());
+    icon_error = QIcon(settings -> icon_error());
+    icon_disconnected = QIcon(settings -> icon_disconnected());
 }
 
 QIcon Tray::icon_newmail(int count) {
@@ -96,59 +84,56 @@ QIcon Tray::icon_newmail(int count) {
 }
 
 void Tray::setup_menu() {
-    QAction *ext_cmd = new QAction(tr("Run ") + ext_app_cmd, this);
-    connect (ext_cmd, SIGNAL(triggered()), this, SLOT(run_ext_app()));
+    menuItems.ext_cmd = new QAction(tr("Run ") + (settings -> ext_app_cmd()), this);
+    connect (menuItems.ext_cmd, SIGNAL(triggered()), this, SLOT(run_ext_app()));
 
-    QAction *info = new QAction(tr("&Diagnostics ..."), this);
-    info->setCheckable(true);
-    info->setChecked(false);
+    menuItems.info = new QAction(tr("&Diagnostics ..."), this);
+    menuItems.info->setCheckable(true);
+    menuItems.info->setChecked(false);
     // triggered is only emitted on user actions
     // connect(info, SIGNAL(toggled(bool)), infobox, SLOT(setVisible(bool)));
-    connect(info, SIGNAL(triggered(bool)), infobox, SLOT(setVisible(bool)));
-    action_info = info;
-    connect(infobox, SIGNAL(hidden()), action_info, SLOT(toggle()));
+    connect(menuItems.info, SIGNAL(triggered(bool)), infobox, SLOT(setVisible(bool)));
+    connect(infobox, SIGNAL(hidden()), menuItems.info, SLOT(toggle()));
 
-    con = new QAction(tr("&Connect"), this);
-    con->setEnabled(false);
-    connect(con, SIGNAL(triggered()), this, SIGNAL(connect_requested()));
+    menuItems.con = new QAction(tr("&Connect"), this);
+    menuItems.con->setEnabled(false);
+    connect(menuItems.con, SIGNAL(triggered()), this, SIGNAL(connect_requested()));
 
-    discon = new QAction(tr("&Disconnect"), this);
-    discon -> setEnabled(false);
-    connect(discon, SIGNAL(triggered()), this, SIGNAL(disconnect_requested()));
+    menuItems.discon = new QAction(tr("&Disconnect"), this);
+    menuItems.discon -> setEnabled(false);
+    connect(menuItems.discon, SIGNAL(triggered()), this, SIGNAL(disconnect_requested()));
 
-    QAction *preview = new QAction(tr("&Enable preview"), this);
-    preview->setCheckable(true);
-    preview->setChecked(show_preview);
-    connect(preview, SIGNAL(toggled(bool)), this, SIGNAL(preview_toggled(bool)));
-    connect(preview, SIGNAL(toggled(bool)), this, SLOT(preview_toggle(bool)));
+    menuItems.preview = new QAction(tr("&Enable preview"), this);
+    menuItems.preview->setCheckable(true);
+    menuItems.preview->setChecked(settings -> preview_enabled());
+    connect(menuItems.preview, SIGNAL(toggled(bool)), this, SIGNAL(preview_toggled(bool)));
+    connect(menuItems.preview, SIGNAL(toggled(bool)), this, SLOT(preview_toggle(bool)));
 
-    QAction *ab = new QAction(tr("&About ..."), this);
-    connect(ab, SIGNAL(triggered()), this, SLOT(about()));
+    menuItems.about = new QAction(tr("&About ..."), this);
+    connect(menuItems.about, SIGNAL(triggered()), this, SLOT(about()));
 
-    QAction *quit = new QAction(tr("&Quit"), this);
-    connect(quit, SIGNAL(triggered()), qApp, SLOT(quit()));
+    menuItems.quit = new QAction(tr("&Quit"), this);
+    connect(menuItems.quit, SIGNAL(triggered()), qApp, SLOT(quit()));
 
-    QSettings s;
-    QWidgetAction *host = new QWidgetAction(this);
-    QLabel *label = new QLabel(s.value("host").toString());
-    host->setDefaultWidget(label);
+    menuItems.host = new QAction(settings -> host(), this);
 
-    QAction *settings = new QAction(tr("&Settings ..."), this);
-    connect(settings, SIGNAL(triggered()), this, SIGNAL(show_settings()));
+    menuItems.settings = new QAction(tr("&Settings ..."), this);
+    connect(menuItems.settings, SIGNAL(triggered()), this, SIGNAL(show_settings()));
 
-    QMenu *menu = new QMenu(dynamic_cast<QWidget*>(tray));
-    menu->addAction(host);
+    QMenu *menu = new QMenu();
+    menu->addAction(menuItems.host);
+    menu->setDefaultAction(menuItems.host);
     menu->addSeparator();
-    menu->addAction(ext_cmd);
-    menu->addAction(info);
-    menu->addAction(con);
-    menu->addAction(discon);
-    menu->addAction(preview);
-    menu->addAction(settings);
+    menu->addAction(menuItems.ext_cmd);
+    menu->addAction(menuItems.info);
+    menu->addAction(menuItems.con);
+    menu->addAction(menuItems.discon);
+    menu->addAction(menuItems.preview);
+    menu->addAction(menuItems.settings);
     menu->addSeparator();
-    menu->addAction(ab);
+    menu->addAction(menuItems.about);
     menu->addSeparator();
-    menu->addAction(quit);
+    menu->addAction(menuItems.quit);
 
     tray->setContextMenu(menu);
 }
@@ -158,7 +143,7 @@ Tray::~Tray() {
 }
 
 void Tray::run_ext_app() {
-    emit run_ext_app(ext_app_cmd);
+    emit run_ext_app(settings -> ext_app_cmd());
 }
 
 void Tray::reconnect() {
@@ -167,7 +152,6 @@ void Tray::reconnect() {
 }
 
 void Tray::action(QSystemTrayIcon::ActivationReason r) {
-    std::cerr << "Clicked "<< r;
     switch (r) {
         case QSystemTrayIcon::Trigger :
             show_message();
@@ -217,19 +201,30 @@ void Tray::new_headers(const QByteArray &a) {
     show_message();
 }
 
+void Tray::new_settings(const SettingsPtr& aSettings)
+{
+    SettingsPtr old(settings);
+    settings = aSettings;
+    if (settings->host() != old ->host())
+        menuItems.host->setText(settings->host());
+    if (settings->ext_app_cmd() != old -> ext_app_cmd()) {
+        menuItems.ext_cmd->setText(settings  -> ext_app_cmd());
+    }
+}
+
 void Tray::show_message() {
-    if (!new_msg || !show_preview)
+    if (!new_msg || !settings -> preview_enabled())
         return;
     tray->showMessage(QString("New messages"), Qt::escape(QString::fromUtf8(headers)),
-                      QSystemTrayIcon::Information, preview_time * 1000);
+                      QSystemTrayIcon::Information, settings -> preview_time() * 1000);
 }
 
 void Tray::connected() {
     tray->setIcon(icon_normal);
     if (tray->toolTip() == "Disconnected")
         tray->setToolTip("Connected");
-    con->setEnabled(false);
-    discon->setEnabled(true);
+    menuItems.con->setEnabled(false);
+    menuItems.discon->setEnabled(true);
 }
 
 
@@ -238,8 +233,8 @@ void Tray::disconnected() {
     tray->setToolTip("Disconnected");
     headers.clear();
     new_msg = 0;
-    con->setEnabled(true);
-    discon->setEnabled(false);
+    menuItems.con->setEnabled(true);
+    menuItems.discon->setEnabled(false);
     if (pre_reconnect) {
         pre_reconnect = false;
         emit connect_requested();
@@ -247,7 +242,7 @@ void Tray::disconnected() {
 }
 
 void Tray::preview_toggle(bool b) {
-    show_preview = b;
+    settings -> set_preview_enabled(b);
 }
 
 void Tray::setup_infobox() {

@@ -29,6 +29,7 @@
 #include <QIcon>
 #include <QSystemTrayIcon>
 
+#include "settings.hh"
 #include "setupdialog.hh"
 
 class QAction;
@@ -39,7 +40,7 @@ class Tray : public QObject {
     Q_OBJECT
 
 public:
-    Tray();
+    Tray(const SettingsPtr& aSettings = SettingsPtr(new Settings));
     ~Tray();
 
 public slots:
@@ -49,6 +50,7 @@ public slots:
     void debug(const QString&);
     void new_messages(size_t);
     void new_headers(const QByteArray&);
+    void new_settings(const SettingsPtr&);
     void run_ext_app();
 
     void connected();
@@ -66,18 +68,22 @@ private slots:
     void about();
 
 private:
+    struct MenuItems {
+            QAction *host, *ext_cmd;
+            QAction *info, *about, *quit;
+            QAction *con, *discon;
+            QAction *settings, *preview;
+    };
+    QSharedPointer<Settings> settings;
     QSystemTrayIcon *tray;
-    QAction *con, *discon, *action_info;
     Infobox *infobox;
     SetupDialog *setupDialog;
+    MenuItems menuItems;
     QIcon icon_normal, icon_error, icon_disconnected;
     QPixmap pixmap_new;
     size_t new_msg;
-    bool show_preview;
-    size_t preview_time;
     QByteArray headers;
     bool pre_reconnect;
-    QString ext_app_cmd;
 
     QIcon icon_newmail(int count);
     void reconnect();
@@ -85,6 +91,7 @@ private:
     void setup_menu();
     void setup_infobox();
     void show_message();
+    void setup_icons();
 };
 
 #endif

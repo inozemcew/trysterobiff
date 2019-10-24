@@ -26,6 +26,7 @@
 #define EXTERNAL_HH
 
 #include <QObject>
+#include "settings.hh"
 
 class QProcess;
 
@@ -35,13 +36,15 @@ class External : public QObject {
   private:
     QProcess *p;
     QString cmd;
+    SettingsPtr settings;
 
   public:
-    External();
+    External(const SettingsPtr& aSettings = SettingsPtr(new Settings));
 
     public slots:
       void new_messages(size_t);
       void ext_app(QString app_cmd);
+      void new_settings(const SettingsPtr s);
 };
 
 #endif

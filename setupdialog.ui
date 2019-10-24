@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>457</width>
-    <height>406</height>
+    <height>428</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,7 +22,7 @@
         <property name="currentIndex">
          <number>0</number>
         </property>
-        <widget class="QWidget" name="paGeneral" native="true">
+        <widget class="QWidget" name="paGeneral">
          <attribute name="title">
           <string>General</string>
          </attribute>
@@ -118,6 +118,12 @@
             <item row="6" column="1">
              <widget class="QWidget" name="widget_2" native="true">
               <layout class="QHBoxLayout" name="horizontalLayout_2">
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
                 <widget class="QLineEdit" name="leExternalCmd">
                  <property name="toolTip">
@@ -145,6 +151,12 @@
             <item row="7" column="1">
              <widget class="QWidget" name="widget_8" native="true">
               <layout class="QHBoxLayout" name="horizontalLayout_11">
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
                 <widget class="QLineEdit" name="leExternalApp">
                  <property name="toolTip">
@@ -166,7 +178,7 @@
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="paIMAP" native="true">
+        <widget class="QWidget" name="paIMAP">
          <attribute name="title">
           <string>IMAP</string>
          </attribute>
@@ -306,17 +318,29 @@
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="paGUI" native="true">
+        <widget class="QWidget" name="paGUI">
          <attribute name="title">
           <string>GUI</string>
          </attribute>
          <layout class="QHBoxLayout" name="horizontalLayout_5">
           <item>
            <layout class="QFormLayout" name="formLayout_3">
+            <property name="labelAlignment">
+             <set>Qt::AlignBottom|Qt::AlignRight|Qt::AlignTrailing</set>
+            </property>
             <item row="0" column="0">
              <widget class="QLabel" name="newmailIconLabel">
               <property name="text">
                <string>Newmail icon</string>
+              </property>
+              <property name="textFormat">
+               <enum>Qt::AutoText</enum>
+              </property>
+              <property name="scaledContents">
+               <bool>false</bool>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -328,19 +352,53 @@
                 <height>0</height>
                </size>
               </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
               <layout class="QHBoxLayout" name="horizontalLayout_6">
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
-                <widget class="QPushButton" name="pushButton">
-                 <property name="text">
-                  <string notr="true">...</string>
+                <widget class="QLabel" name="imNewMailIcon">
+                 <property name="minimumSize">
+                  <size>
+                   <width>32</width>
+                   <height>32</height>
+                  </size>
                  </property>
-                 <property name="autoDefault">
-                  <bool>false</bool>
+                 <property name="maximumSize">
+                  <size>
+                   <width>32</width>
+                   <height>32</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="pixmap">
+                  <pixmap resource="gui.qrc">:/icons/mail-message-new.svg</pixmap>
+                 </property>
+                 <property name="scaledContents">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="lineEdit"/>
+                <widget class="QLineEdit" name="leNewmailIcon"/>
+               </item>
+               <item>
+                <widget class="QToolButton" name="btNewmailIcon">
+                 <property name="text">
+                  <string notr="true">...</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </widget>
@@ -349,6 +407,9 @@
              <widget class="QLabel" name="newmailIconLabel_2">
               <property name="text">
                <string>Normal icon</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -361,18 +422,46 @@
                </size>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_7">
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
-                <widget class="QPushButton" name="pushButton_2">
-                 <property name="text">
-                  <string notr="true">...</string>
+                <widget class="QLabel" name="imNormalIcon">
+                 <property name="minimumSize">
+                  <size>
+                   <width>32</width>
+                   <height>32</height>
+                  </size>
                  </property>
-                 <property name="autoDefault">
-                  <bool>false</bool>
+                 <property name="maximumSize">
+                  <size>
+                   <width>32</width>
+                   <height>32</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="pixmap">
+                  <pixmap resource="gui.qrc">:/icons/mail-forward.svg</pixmap>
+                 </property>
+                 <property name="scaledContents">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="lineEdit_2"/>
+                <widget class="QLineEdit" name="leNormalIcon"/>
+               </item>
+               <item>
+                <widget class="QToolButton" name="btNormalIcon">
+                 <property name="text">
+                  <string notr="true">...</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </widget>
@@ -381,6 +470,9 @@
              <widget class="QLabel" name="newmailIconLabel_3">
               <property name="text">
                <string>Error icon</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -393,18 +485,46 @@
                </size>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_8">
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
-                <widget class="QPushButton" name="pushButton_3">
-                 <property name="text">
-                  <string notr="true">...</string>
+                <widget class="QLabel" name="imErrorIcon">
+                 <property name="minimumSize">
+                  <size>
+                   <width>32</width>
+                   <height>32</height>
+                  </size>
                  </property>
-                 <property name="autoDefault">
-                  <bool>false</bool>
+                 <property name="maximumSize">
+                  <size>
+                   <width>32</width>
+                   <height>32</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="pixmap">
+                  <pixmap resource="gui.qrc">:/icons/process-stop.svg</pixmap>
+                 </property>
+                 <property name="scaledContents">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="lineEdit_3"/>
+                <widget class="QLineEdit" name="leErrorIcon"/>
+               </item>
+               <item>
+                <widget class="QToolButton" name="btErrorIcon">
+                 <property name="text">
+                  <string notr="true">...</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </widget>
@@ -413,6 +533,9 @@
              <widget class="QLabel" name="newmailIconLabel_4">
               <property name="text">
                <string>Disconnected icon</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -425,18 +548,46 @@
                </size>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_10">
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
-                <widget class="QPushButton" name="pushButton_5">
-                 <property name="text">
-                  <string notr="true">...</string>
+                <widget class="QLabel" name="imDisconnectedIcon">
+                 <property name="minimumSize">
+                  <size>
+                   <width>32</width>
+                   <height>32</height>
+                  </size>
                  </property>
-                 <property name="autoDefault">
-                  <bool>false</bool>
+                 <property name="maximumSize">
+                  <size>
+                   <width>32</width>
+                   <height>32</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="pixmap">
+                  <pixmap resource="gui.qrc">:/icons/applications-multimedia.svg</pixmap>
+                 </property>
+                 <property name="scaledContents">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="lineEdit_5"/>
+                <widget class="QLineEdit" name="leDisconnectedIcon"/>
+               </item>
+               <item>
+                <widget class="QToolButton" name="btDisconnectedIcon">
+                 <property name="text">
+                  <string notr="true">...</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </widget>
@@ -462,7 +613,9 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="gui.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>
@@ -471,8 +624,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>224</x>
-     <y>380</y>
+     <x>230</x>
+     <y>421</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -487,8 +640,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>366</y>
+     <x>322</x>
+     <y>421</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -512,5 +665,105 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>btNewmailIcon</sender>
+   <signal>clicked()</signal>
+   <receiver>SetupDialog</receiver>
+   <slot>btIconClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>412</x>
+     <y>72</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>228</x>
+     <y>213</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btNormalIcon</sender>
+   <signal>clicked()</signal>
+   <receiver>SetupDialog</receiver>
+   <slot>btIconClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>419</x>
+     <y>125</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>453</x>
+     <y>167</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btErrorIcon</sender>
+   <signal>clicked()</signal>
+   <receiver>SetupDialog</receiver>
+   <slot>btIconClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>421</x>
+     <y>178</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>451</x>
+     <y>280</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btDisconnectedIcon</sender>
+   <signal>clicked()</signal>
+   <receiver>SetupDialog</receiver>
+   <slot>btIconClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>408</x>
+     <y>234</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>452</x>
+     <y>332</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btExternalCmd</sender>
+   <signal>clicked()</signal>
+   <receiver>SetupDialog</receiver>
+   <slot>btExternalClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>412</x>
+     <y>282</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>228</x>
+     <y>213</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btExternalApp</sender>
+   <signal>clicked()</signal>
+   <receiver>SetupDialog</receiver>
+   <slot>btExternalClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>412</x>
+     <y>322</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>228</x>
+     <y>213</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
+ <slots>
+  <slot>btIconClicked()</slot>
+  <slot>btExternalClicked()</slot>
+ </slots>
 </ui>

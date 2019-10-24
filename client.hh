@@ -39,6 +39,8 @@ class Slave;
 
 #include <QTime>
 
+#include "settings.hh"
+
 
 #ifdef NOIMAPDEBUG
 #define EMITDEBUG(A) do {} while(0)
@@ -50,7 +52,7 @@ class Slave;
 class Client : public QThread {
     Q_OBJECT
     public:
-        Client();
+        Client(const SettingsPtr& s = SettingsPtr(new Settings));
         ~Client();
 
     public slots:
@@ -58,6 +60,7 @@ class Client : public QThread {
         void preview_toggle(bool);
         void do_connect();
         void do_disconnect();
+        void new_settings(const QSharedPointer<Settings>& aSettings);
 
     signals:
         void new_messages(size_t);
@@ -93,6 +96,7 @@ class Client : public QThread {
             HEADER_DATE
         };
 
+        QSharedPointer<Settings> settings;
         QTime time;
         QDateTime last_connect;
 
@@ -103,22 +107,14 @@ class Client : public QThread {
 
         QSslSocket *socket;
         QTimer *timer;
-        QString host, user, pw, mbox;
-        int port;
-        int timeout;
+
         size_t old_recent;
         size_t fetched_rows;
         size_t counter;
         QByteArray login_tag, examine_tag, idle_tag, search_tag, fetch_tag, query,
         subject, from, date, headers;
-        bool preview_enabled;
-        size_t re_idle_intervall;
-        bool use_recent;
+
         bool has_recent;
-        bool detect_gmail;
-        bool update_always;
-        bool auto_reconnect;
-        QString cert2;
 
         void write_line(const QByteArray &);
         void error_close(const QString &);

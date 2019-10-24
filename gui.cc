@@ -29,111 +29,24 @@
 #include <QTimer>
 #include <QSettings>
 #include <QTextCodec>
-#include <QDir>
 
 #include "tray.hh"
 #include "client.hh"
 #include "external.hh"
 
 #include "dummy.hh"
+#include "name.hh"
 
 #include <iostream>
 
-#include "name.hh"
-
 using namespace std;
-
-void help(const char *prog)
-{
-  cerr << "Call: " << prog <<
-    " (Option)*\n\n"
-    "where Option is one of:\n"
-    "\n"
-   //--------------------------------------------------------------------------------
-    "  --help            this screen\n"
-    "  --settings DIR    read trysterobiff.ini from DIR\n"
-    "  --debug           print diagnostic output to stderr\n\n";
-   //--------------------------------------------------------------------------------
-}
-
-
-struct Options {
-    bool debug;
-    QString settings_path;
-
-    Options() : debug(false) { }
-
-    Options(int argc, char **argv) : debug(false) {
-        parse_args(argc, argv);
-    }
-
-    void parse_args(int argc, char **argv) {
-        for (int i = 1; i<argc; ++i)
-            if (!strcmp(argv[i], "--debug"))
-                debug = true;
-            else if (!strcmp(argv[i], "--help")) {
-                help(argv[0]);
-                exit(0);
-            } else if (!strcmp(argv[i], "--settings")) {
-                ++i;
-                if (i>=argc) {
-                    cerr << "Missing argument to --settings\n";
-                    exit(1);
-                }
-                settings_path = argv[i];
-                QDir dir(settings_path);
-                if (!dir.exists()) {
-                    cerr << "Settings directory '" << argv[i] << "' does not exist\n";
-                    exit(1);
-                }
-            } else {
-                cerr << "Unknown option: " << argv[i] << '\n';
-                help(argv[0]);
-                exit(1);
-            }
-    }
-};
-
-
-static void setup_settings(const Options &opts) {
-    QCoreApplication::setOrganizationName(IMAPBIFFNAME);
-    QCoreApplication::setApplicationName(IMAPBIFFNAME);
-
-    QSettings::setDefaultFormat(QSettings::IniFormat);
-    if (!opts.settings_path.isEmpty()) {
-        QSettings::setPath(QSettings::IniFormat, QSettings::UserScope,
-                           opts.settings_path);
-    }
-
-    QSettings s;
-    if (!s.value("host").isValid()) {
-        std::cerr << "Config file is missing. Copy example file to ";
-
-        if (opts.settings_path.isEmpty())
-            cerr << "$HOME/.config";
-        else
-            cerr << opts.settings_path.toUtf8().constData();
-
-        cerr << "/" IMAPBIFFNAME ".ini,\n"
-        "chmod 600 it and adjust the settings.\n";
-        exit(6);
-    }
-
-    QString cert = s.value("cert").toString();
-    if (cert != "") {
-        bool b = QSslSocket::addDefaultCaCertificates(cert);
-        if (!b) {
-            std::cerr << "Could not load additional root certificate: "
-            << cert.toUtf8().constData() << '\n';
-            exit(7);
-        }
-    }
-}
 
 
 int main(int argc, char **argv) {
-    Options opts(argc, argv);
+
     QApplication app(argc, argv);
+    QCoreApplication::setOrganizationName(IMAPBIFFNAME);
+    QCoreApplication::setApplicationName(IMAPBIFFNAME);
     app.setQuitOnLastWindowClosed(false);
 
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
@@ -150,23 +63,26 @@ int main(int argc, char **argv) {
         return 23;
     }
 
-    setup_settings(opts);
+    Options opts(QApplication::arguments());
+    Settings::setup_settings(opts);
 
-    Tray t;
-    Client c;
-    External e;
+    SettingsPtr s(new Settings);
+
+    Tray t(s);
+    Client c(s);
+    External e(s);
     SetupDialog sd;
 
-    #ifndef NOIMAPDEBUG
+#ifndef NOIMAPDEBUG
     QObject::connect(&c, SIGNAL(debug(const QString&)), &t, SLOT(debug(const QString&)));
-    if (opts.debug)
-    {
+    if (opts.debug) {
         Dummy *d = new Dummy();
         QObject::connect(&c, SIGNAL(debug(const QString&)), d, SLOT(error(const QString&)));
         QObject::connect(&c, SIGNAL(error(const QString&)), d, SLOT(error(const QString&)));
         QObject::connect(&c, SIGNAL(new_messages(size_t)),  d, SLOT(new_messages(size_t)));
     }
-    #endif
+#endif
+
     QObject::connect(&c, SIGNAL(error(const QString&)), &t, SLOT(error(const QString&)));
     QObject::connect(&c, SIGNAL(new_messages(size_t)), &t, SLOT(new_messages(size_t)));
     QObject::connect(&c, SIGNAL(new_headers(const QByteArray&)), &t, SLOT(new_headers(const QByteArray&)));
@@ -181,6 +97,8 @@ int main(int argc, char **argv) {
     QObject::connect(&t, SIGNAL(run_ext_app(const QString&)), &e, SLOT(ext_app(const QString&)));
 
     QObject::connect(&t, SIGNAL(show_settings()), &sd, SLOT(showSettings()));
+
+    QObject::connect(&sd, SIGNAL(settings_changed(const SettingsPtr&)), &t, SLOT(new_settings(const SettingsPtr&)));
 
     c.start();
     return app.exec();

@@ -43,7 +43,6 @@
 #include "client.hh"
 
 #include <QSslSocket>
-#include <QSettings>
 #include <QTimer>
 #include <QStringList>
 
@@ -55,34 +54,13 @@
 
 using namespace std;
 
-Client::Client() : state(DISCONNECTED), last_header(HEADER_NONE), has_idle(false),
+Client::Client(const SettingsPtr& s ) : settings(s), state(DISCONNECTED), last_header(HEADER_NONE), has_idle(false),
                    socket(0), timer(0),
-                   port(0), timeout(30 * 1000),
                    old_recent(0), fetched_rows(0), counter(0),
-                   preview_enabled(true), re_idle_intervall(28 * 60 * 1000),
-                   use_recent(true),
-                   has_recent(true),
-                   detect_gmail(true),
-                   update_always(false),
-                   auto_reconnect(false)
-{
+                   has_recent(true) {
 }
 
 void Client::run() {
-    QSettings s;
-    host = s.value("host").toString();
-    port = s.value("port").toInt();
-    user = s.value("user").toString();
-    pw = s.value("pw").toString();
-    mbox = s.value("mbox", QVariant("INBOX")).toString();
-    preview_enabled = s.value("preview", QVariant(true)).toBool();
-    timeout = s.value("timeout", QVariant(30)).toInt()*1000;
-    re_idle_intervall = s.value("re_idle", QVariant(28)).toInt()*60*1000;
-    use_recent = s.value("use_recent", QVariant(true)).toBool();
-    detect_gmail = s.value("detect_gmail", QVariant(true)).toBool();
-    update_always = s.value("update_always", QVariant(false)).toBool();
-    auto_reconnect = s.value("auto_reconnect", QVariant(true)).toBool();
-    cert2 = s.value("cert2").toString();
 
     QTimer::singleShot(0, this, SLOT(setup()));
     exec();
@@ -90,9 +68,13 @@ void Client::run() {
 
 void Client::setup() {
     EMITDEBUG("START\n");
+    if (settings -> root_cert() != "") {
+        bool b = QSslSocket::addDefaultCaCertificates(settings -> root_cert());
+        //if (!b)
+    }
     socket = new QSslSocket();
-    if (cert2 != "") {
-        socket -> setLocalCertificate(cert2);
+    if (settings -> local_cert() != "") {
+        socket -> setLocalCertificate(settings -> local_cert());
     }
 
     socket -> setPeerVerifyMode(QSslSocket::QueryPeer);
@@ -112,7 +94,7 @@ void Client::setup() {
     timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(done()));
 
-    socket->connectToHostEncrypted(host, port);
+    socket->connectToHostEncrypted(settings -> host(), settings -> port());
 }
 
 void Client::write_line(const QByteArray &a) {
@@ -144,11 +126,11 @@ void Client::so_changed(QAbstractSocket::SocketState i) {
     switch (i) {
 
         case QAbstractSocket::ConnectedState :
-            EMITDEBUG("Connected to: " + host + '\n');
+            EMITDEBUG("Connected to: " + settings -> host() + '\n');
             break;
 
         case QAbstractSocket::UnconnectedState :
-            EMITDEBUG("Disconnected from " + host);
+            EMITDEBUG("Disconnected from " + settings -> host());
             state = DISCONNECTED;
             idle_tag.clear();
             login_tag.clear();
@@ -169,7 +151,7 @@ void Client::so_encrypted() {
 }
 
 void Client::reconnect() {
-    if (auto_reconnect) {
+    if (settings -> auto_reconnect()) {
         QDateTime current(QDateTime::currentDateTimeUtc());
         QDateTime t(last_connect);
         t.addSecs(60*5);
@@ -229,10 +211,10 @@ bool Client::tag_ok(const QByteArray &a, QByteArray &t, State s) {
 }
 
 bool Client::check_gmail(const QByteArray &u) {
-    if (detect_gmail && u.contains(" GIMAP ")) {
+    if (settings -> detect_gmail() && u.contains(" GIMAP ")) {
         EMITDEBUG("Connected to Gmail-Server - using UNSEEN instead of RECENT");
         has_recent = false;
-        update_always = true;
+        settings -> set_update_always(true);
         return true;
     }
 
@@ -301,7 +283,7 @@ void Client::parse(const QByteArray &a) {
             if (tag_ok(u, fetch_tag, STARTINGIDLE)) {
                 if (fetched_rows) {
                     emit new_messages(fetched_rows);
-                    if (preview_enabled) {
+                    if (settings -> preview_enabled()) {
                         EMITDEBUG(headers);
                         emit new_headers(headers);
                     }
@@ -361,14 +343,14 @@ bool Client::parse_recent(const QByteArray &u) {
     EMITDEBUG("Minutes since last status push: "
     + QString::number(double(time.restart())/1000.0/60));
 
-    if (preview_enabled || !has_recent) {
+    if (settings -> preview_enabled() || !has_recent) {
         if (state == IDLING) {
             old_recent = msg;
             if (!old_recent)
                 emit new_messages(size_t(msg));
             done();
         } else {                                            // state == EXAMING
-            if (update_always || old_recent != size_t(msg)) {
+            if (settings -> update_always() || old_recent != size_t(msg)) {
                 old_recent = msg;
                 search();
             }
@@ -466,21 +448,21 @@ void Client::login() {
     login_tag = tag();
     state = LOGGINGIN;
     time.start();
-    write_line(login_tag + " login " + user.toUtf8() + " " + pw.toUtf8());
+    write_line(login_tag + " login " + settings -> user().toUtf8() + " " + settings -> pw().toUtf8());
 }
 
 void Client::examine() {
     assert(examine_tag.isEmpty());
     examine_tag = tag();
     state = EXAMING;
-    write_line(examine_tag + " examine " + mbox.toUtf8());
+    write_line(examine_tag + " examine " + settings -> mbox().toUtf8());
 }
 
 void Client::idle() {
     assert(idle_tag.isEmpty());
     idle_tag = tag();
     state = STARTINGIDLE;
-    timer->start(re_idle_intervall);
+    timer->start(settings -> re_idle_intervall());
     write_line(idle_tag + " idle");
 }
 
@@ -537,7 +519,7 @@ Client::~Client() {
 void Client::preview_toggle(bool b) {
     QSettings s;
     s.setValue("preview", QVariant(b));
-    preview_enabled = b;
+    settings -> set_preview_enabled(b); //TODO: move changing to signal emitter
     if (b && old_recent)
         search();
 }
@@ -547,9 +529,9 @@ void Client::do_connect() {
         emit error("Cannot connect.");
         return;
       }
-    socket->connectToHostEncrypted(host, port);
+    socket->connectToHostEncrypted(settings -> host(), settings -> port());
     last_connect = QDateTime::currentDateTimeUtc();
-    has_recent = use_recent;
+    has_recent = settings -> use_recent();
 }
 
 #include <iostream>
@@ -560,6 +542,10 @@ void Client::do_disconnect() {
         return;
     }
     socket->disconnectFromHost();
+}
+
+void Client::new_settings(const QSharedPointer<Settings>& aSettings) {
+    settings = aSettings;
 }
 
 void Client::error_close(const QString &s) {

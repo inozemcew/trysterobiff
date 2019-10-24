@@ -24,27 +24,28 @@
 #include "external.hh"
 
 #include <QProcess>
-#include <QSettings>
 #include <iostream>
 
 
-External::External()
-  : p(0)
-{
-  QSettings s;
-  QVariant v = s.value("external_cmd");
-  if (v.isValid()) {
-    cmd = v.toString();
-    p = new QProcess(this);
-  }
+External::External(const SettingsPtr& s) : p(0) {
+    new_settings(s);
+}
+
+void External::new_settings(const SettingsPtr s) {
+    settings = s;
+    if (!settings -> external_cmd().isEmpty()) {
+        cmd = settings -> external_cmd();
+        if (p) delete p;
+        p = new QProcess(this);
+    }
 }
 
 void External::new_messages(size_t i)
 {
   if (!i)
-    return;
+      return;
   if (!p || p->state() != QProcess::NotRunning)
-    return;
+      return;
   QString t(cmd);
   t.replace("%d", QString::number(i));
   p->start(t);
